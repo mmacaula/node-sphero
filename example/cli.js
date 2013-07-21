@@ -59,14 +59,36 @@ sphero.on("connected", function(ball){
         console.log('received data!', arguments);
       }
       
-      var sensors = [ball.sensors.imu_yaw],
-          hertz = 50,
-          frames = 50,
-          count = 50;
-      ball.setDataStreaming(sensors, hertz, frames, count, mycallback);
+      var sensors = [ ball.sensors.imu_yaw, ball.sensors.imu_pitch, ball.sensors.imu_roll],
+          hertz = 10,
+          frames = 1,
+          count = 255;
+
+      ball.setBackLED(1);
+      // ball.disable auto motor thing
+      ball.setStabilization(false,function(){
+          console.log('stabilization off');
+          ball.setDataStreaming(sensors, hertz, frames, count, mycallback);
+
+          ball.on('notification', function(msg){
+              "use strict";
+              var data = msg.DATA;
+              var firstValue = data.readInt16BE(0);
+              var secondValue = data.readInt16BE(2);
+              var thirdValue = data.readInt16BE(4);
+              console.log('filtered, pitch, roll, yaw might be:  ', firstValue, " : ", secondValue, " : ", thirdValue, " , ", count);
+              if(--count -1 === 0){
+                  console.log('got count, exiting');
+                  ball.close();
+                  process.exit();
+              }
+
+          });
+      });
+
     }
-   commands(sphero);
-    //streamData(sphero,ball);
+   //commands(sphero);
+    streamData(sphero,ball);
 
 });
 
